@@ -16,63 +16,64 @@ app.get('/', (req, res) => {
   });
 });
 
-app.get('/questions', async (req, res) => {
+app.get('/create-test', async (req, res) => {
 
-  const search = req.query.search || '';
+  try {
 
-  const { data, error } = await supabase
-    .from('question_versions')
-    .select(`
-      question_id,
-      version_no,
-      question_text,
-      difficulty_score,
-      questions (
-        question_code,
-        status
-      )
-    `)
-    .ilike('question_text', `%${search}%`);
+    const { data: user } = await supabase
+      .from('users')
+      .select('id')
+      .limit(1)
+      .single();
 
-  res.json({
-    data,
-    error
-  });
+    const { data: question, error: qError } = await supabase
+      .from('questions')
+      .insert({
+        question_code: 'QA-000002',
+        current_version: 1,
+        status: 'DRAFT',
+        creator_id: user.id
+      })
+      .select()
+      .single();
+
+    if (qError) {
+      return res.json(qError);
+    }
+
+    const { data, error } = await supabase
+      .from('question_versions')
+      .insert({
+        question_id: question.id,
+        version_no: 1,
+        question_text: 'What is 30% of 300?',
+        option_a: '60',
+        option_b: '70',
+        option_c: '80',
+        option_d: '90',
+        correct_answer: 'D',
+        solution_text: '30% of 300 = 90',
+        difficulty_score: 30,
+        language: 'English',
+        created_by: user.id
+      });
+
+    res.json({
+      question,
+      data,
+      error
+    });
+
+  } catch (err) {
+
+    res.json({
+      error: err.message
+    });
+
+  }
 
 });
 
-app.get('/questions/:code', async (req, res) => {
-
-  const code = req.params.code;
-
-  const { data, error } = await supabase
-    .from('questions')
-    .select(`
-      question_code,
-      status,
-      current_version,
-      question_versions (
-        version_no,
-        question_text,
-        option_a,
-        option_b,
-        option_c,
-        option_d,
-        correct_answer,
-        solution_text,
-        difficulty_score,
-        language
-      )
-    `)
-    .eq('question_code', code)
-    .single();
-
-  res.json({
-    data,
-    error
-  });
-
-});
 
 app.post('/questions', async (req, res) => {
 
