@@ -8,23 +8,31 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
-app.get('/questions', async (req, res) => {
+app.get('/questions/:code', async (req, res) => {
 
-  const search = req.query.search || '';
+  const code = req.params.code;
 
   const { data, error } = await supabase
-    .from('question_versions')
+    .from('questions')
     .select(`
-      question_id,
-      version_no,
-      question_text,
-      difficulty_score,
-      questions (
-        question_code,
-        status
+      question_code,
+      status,
+      current_version,
+      question_versions (
+        version_no,
+        question_text,
+        option_a,
+        option_b,
+        option_c,
+        option_d,
+        correct_answer,
+        solution_text,
+        difficulty_score,
+        language
       )
     `)
-    .ilike('question_text', `%${search}%`);
+    .eq('question_code', code)
+    .single();
 
   res.json({
     data,
