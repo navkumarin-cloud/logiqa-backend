@@ -10,24 +10,27 @@ const supabase = createClient(
 
 app.get('/questions', async (req, res) => {
 
+  const search = req.query.search || '';
+
   const { data, error } = await supabase
-    .from('questions')
+    .from('question_versions')
     .select(`
-      question_code,
-      status,
-      current_version,
-      question_versions (
-        version_no,
-        question_text,
-        correct_answer,
-        difficulty_score
+      question_id,
+      version_no,
+      question_text,
+      difficulty_score,
+      questions (
+        question_code,
+        status
       )
-    `);
+    `)
+    .ilike('question_text', `%${search}%`);
 
   res.json({
     data,
     error
   });
+
 });
 
 const PORT = process.env.PORT || 3000;
