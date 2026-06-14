@@ -91,15 +91,18 @@ app.post('/questions', async (req, res) => {
       language
     } = req.body;
 
-    const { data: user, error: userError } = await supabase
-      .from('users')
-      .select('id')
-      .limit(1)
-      .single();
+const { data: user, error: userError } = await supabase
+  .from('users')
+  .select('*')
+  .limit(1)
+  .single();
 
-    if (userError) {
-      return res.status(500).json(userError);
-    }
+if (userError) {
+  return res.status(500).json({
+    step: 'user lookup',
+    error: userError
+  });
+}
 
     const { data: question, error: questionError } = await supabase
       .from('questions')
@@ -112,9 +115,12 @@ app.post('/questions', async (req, res) => {
       .select()
       .single();
 
-    if (questionError) {
-      return res.status(500).json(questionError);
-    }
+if (questionError) {
+  return res.status(500).json({
+    step: 'question insert',
+    error: questionError
+  });
+}
 
     const { data: version, error: versionError } = await supabase
       .from('question_versions')
@@ -135,9 +141,12 @@ app.post('/questions', async (req, res) => {
       .select()
       .single();
 
-    if (versionError) {
-      return res.status(500).json(versionError);
-    }
+if (versionError) {
+  return res.status(500).json({
+    step: 'version insert',
+    error: versionError
+  });
+}
 
     res.json({
       question,
